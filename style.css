@@ -1,0 +1,190 @@
+@charset "utf-8";
+/* CSS Document */
+body{
+	width:1400px;
+	height:800px;
+    background-color:#002F2F;
+    color:white;
+    margin:auto;
+   /* background-image: url('bones.jpg');*/
+}
+a{
+    color:white;
+    text-decoration:none;
+    font-weight:bold;
+}
+h1{
+color:white;
+}
+
+h3 a{
+text-decoration:underline;
+}
+
+#gauche {
+	float: left;
+	width: 230px;
+	height:800px;
+	border-right:4px #EFECCA solid;
+	margin-right:10px;
+    padding-left:15px;
+    background-color:#6B979C;
+    border:4px white solid;
+}
+#gauche a{
+	color:black;
+    text-decoration:none;
+    font-weight:bold;
+    padding-right:5px;
+}
+
+#principale{
+	float:right;
+	width: 500px;
+	min-height:800px;
+    background-color:#6B979C;
+    border:4px white solid;
+    margin-right:-8px;
+}
+#principale a{
+color:#002F2F;
+}
+#principale2{
+	/*float:right;
+	width: 800px;*/
+	min-height:800px;
+   /* background-color:#6B979C;*/
+    margin-left:250px;
+    border-left:4px white solid;
+    border-right:4px white solid;
+    margin-right:-8px;
+    padding-top:10px;
+}
+
+#principale3{
+	/*float:right;
+	width: 800px;*/
+	min-height:800px;
+	width:100%;
+   /* background-color:#6B979C;*/
+    /*margin-left:250px;*/
+    border:4px white solid;
+    
+    padding-top:10px;
+}
+
+#image_fiche_film {
+	/*float: left;*/
+	height: 0px;
+    
+}
+#image_saison{
+	float:left;
+	max-width:350px;
+}
+
+#synop_saison{
+	margin-left:360px;
+}
+
+#contenu_saison{
+	clear:both;
+	padding-top:20px;
+}
+
+#contenu_saison td{
+	width:500px;
+}
+.spacer{
+	height:20px;
+}
+.spacer2{
+	height:20px;
+border-top: 2px white solid;
+padding-bottom: 10px;
+}
+
+
+
+
+#image_fiche_film img{
+    padding-top:8px;
+    padding-left:10px;
+}
+#conteneur #principale #synopsis {
+	
+	/*margin-left: 620px;*/
+	min-height: 230px;
+}
+
+#liste {
+    clear: both;
+    margin-top:10px;
+    border-top:4px white solid;
+}
+
+img{
+max-width:600px;
+max-height:800px;
+}
+
+.tab_personne{
+    width:100%;
+}
+.tab_personne tr{
+    width:100%;
+}
+.tab_personne td{
+    width:33%;
+    
+    border:1px white solid;
+
+}
+
+#entete{
+width:100%;
+margin:auto;
+margin-bottom:-4px;
+border:4px white solid;
+background-color:#6B979C;
+position: relative;
+z-index: 10;
+
+}
+
+#entete table{
+width:100%;
+}
+#entete td{
+width:20%;
+font-size:16px;
+}
+#entete h1{
+text-align:center;
+}
+
+#entete h3 {
+text-align:center;
+padding:0px;
+margin:0px;
+}
+#entete h3 input{
+font-size:16px;
+}
+
+#sous_entete{
+background-color: black;
+position: absolute;
+z-index: -1;
+top: 0;
+left: 0;
+right: 0;
+bottom: 0;
+opacity: 0.4;
+-moz-opacity: 0.4;
+-ms-filter: "alpha(opacity=40)";
+filter: alpha(opacity=40);
+}
+
+
+
