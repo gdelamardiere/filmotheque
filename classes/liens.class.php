@@ -34,7 +34,7 @@ class liens{
 	}
 
 	public function liste_lien_film($id_film){
-		$stmt= $this->pdo->prepare("SELECT id,qualite,lien,nom FROM liens where id_film=:id_film ");
+		$stmt= $this->pdo->prepare("SELECT id_liens,qualite,lien,nom FROM liens where id_film=:id_film ");
 		$stmt->execute(array('id_film' => $id_film)) ;
 		return $stmt->fetchAll(PDO::FETCH_ASSOC);
 	}
@@ -79,7 +79,7 @@ class liens{
 	public function insert_lien_film($id_film,$lien){
 		$extension=pathinfo($lien, PATHINFO_EXTENSION);
 		$base_lien=str_replace(".".$extension,"",$lien); 
-		$stmt= $this->pdo->prepare("SELECT COUNT( DISTINCT l.id ) as nb FROM  liens WHERE id_film = :id_film ");
+		$stmt= $this->pdo->prepare("SELECT COUNT( DISTINCT l.id_liens ) as nb FROM  liens WHERE id_film = :id_film ");
 		$stmt->execute(array('id_film' => $id_film)) ;
 		$row = $stmt->fetch(PDO::FETCH_ASSOC);
 		$nb= $row['nb']+1;
@@ -105,8 +105,8 @@ class liens{
 	public function insert_lien_serie($id_serie,$saison,$episode,$lien){
 		$extension=pathinfo($lien, PATHINFO_EXTENSION);
 		$base_lien=str_replace(".".$extension,"",$lien);
-		$stmt= $this->pdo->prepare("SELECT e.id, COUNT( DISTINCT l.id ) as nb FROM  liens as l, episode as e 
-			WHERE e.id=l.id_episode and e.id_serie = :id_serie AND id_saison = :saison AND num_episode = :episode");
+		$stmt= $this->pdo->prepare("SELECT e.id_episode, COUNT( DISTINCT l.id_liens ) as nb FROM  liens as l, episode as e 
+			WHERE e.id_episode=l.id_episode and e.id_serie = :id_serie AND id_saison = :saison AND num_episode = :episode");
 		$stmt->execute(array("id_serie" => $id_serie,"saison"=>$saison,"episode"=>$episode));
 		$row = $stmt->fetch(PDO::FETCH_ASSOC);
 		$nb= $row['nb']+1;
@@ -114,19 +114,19 @@ class liens{
 			$lien_pc=$base_lien."_".$nb.".".$extension;	
 		}
 		else{
-			$stmt= $this->pdo->prepare("SELECT id FROM  episode WHERE id_serie = :id_serie AND id_saison = :saison AND num_episode = :episode");
+			$stmt= $this->pdo->prepare("SELECT id_episode FROM  episode WHERE id_serie = :id_serie AND id_saison = :saison AND num_episode = :episode");
 			$stmt->execute(array("id_serie" => $id_serie,"saison"=>$saison,"episode"=>$episode)) ;
 			$row = $stmt->fetch(PDO::FETCH_ASSOC);
 			$lien_pc=$lien;
 		}			
 		$stmt= $this->pdo->prepare("INSERT INTO liens (id_serie,lien,nom) VALUES(:id_serie, :lien_pc,:nom)");
-		$stmt->execute(array('id_serie' => $row['id'],"lien_pc"=>$lien_pc,"nom"=>"lien".$nb)) ;
+		$stmt->execute(array('id_serie' => $row['id_episode'],"lien_pc"=>$lien_pc,"nom"=>"lien".$nb)) ;
 	}
 
 
-	public function modifer_qualite_lien($id,$value){
-		$stmt= $this->pdo->prepare("UPDATE liens SET qualite=:value WHERE id=:id");
-		$stmt->execute(array("value" => $value,"id"=>$id)) ;
+	public function modifer_qualite_lien($id_liens,$value){
+		$stmt= $this->pdo->prepare("UPDATE liens SET qualite=:value WHERE id_liens=:id_liens");
+		$stmt->execute(array("value" => $value,"id_liens"=>$id_liens)) ;
 	}
 
 

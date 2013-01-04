@@ -1,12 +1,7 @@
 <?php
 require_once('database.class.php');
-require_once('api_allocine_helper_2.2.class.php');
 
 class acteurs{
-
-	private $helper;
-	private $id_allocine;
-	private $profile="large";
 	private $pdo;
 
 	public function getIdAllocine()
@@ -49,37 +44,37 @@ class acteurs{
 	 *                                      						[role] => John Milton)
 	 * @return [type]              [description]
 	 */
-	function ajoutActeursFilm($id,$aCastMember){
-		$stmt_count = $this->pdo->prepare("SELECT count(id_allocine) as nb FROM acteur WHERE id_allocine = :id_allocine");
-		$stmt_acteur = $this->pdo->prepare("INSERT INTO acteur(id_allocine,nom) values(:id_allocine,:name)");
+	function ajoutActeursFilm($id_film,$aCastMember){
+		$stmt_count = $this->pdo->prepare("SELECT count(id_acteur) as nb FROM acteur WHERE id_acteur = :id_acteur");
+		$stmt_acteur = $this->pdo->prepare("INSERT INTO acteur(id_acteur,nom) values(:id_acteur,:name)");
 		$stmt_insert_realisateur = $this->pdo->prepare("REPLACE INTO realisateur_film(id_realisateur,id_film) values(:id_realisateur,:id_film)");
 		$stmt_insert_acteur = $this->pdo->prepare("REPLACE INTO acteur_film(id_acteur,id_film,role) values(:id_acteur,:id_film,:role)");
 		foreach($aCastMember as $value){
-			$stmt_count->execute(array('id_allocine' => $value['person']['code']));
+			$stmt_count->execute(array('id_acteur' => $value['person']['code']));
 			$nb=$stmt_count->fetch(PDO::FETCH_ASSOC);
 			if($nb['nb']==0){
-				$stmt_acteur->execute(array('id_allocine' => $value['person']['code'],'nom' => $value['person']['name']));
+				$stmt_acteur->execute(array('id_acteur' => $value['person']['code'],'nom' => $value['person']['name']));
 			}
 			if($value['activity']['$']=="Réalisateur"){
-				$stmt_insert_realisateur->execute(array('id_realisateur' => $value['person']['code'],'id_film'=>$id));
+				$stmt_insert_realisateur->execute(array('id_realisateur' => $value['person']['code'],'id_film'=>$id_film));
 			}
 			elseif($value['activity']['$']=="Acteur"){
-				$stmt_insert_acteur->execute(array('id_acteur' => $value['person']['code'],'id_film'=>$id,'role'=>$value['role']));
+				$stmt_insert_acteur->execute(array('id_acteur' => $value['person']['code'],'id_film'=>$id_film,'role'=>$value['role']));
 			}
 		}
 	}
 
-	function ajoutActeursSerie($id,$aCastMember){		
-		$stmt_count = $this->pdo->prepare("SELECT count(id_allocine) as nb FROM acteur WHERE id_allocine = :id_allocine");
-		$stmt_acteur = $this->pdo->prepare("INSERT INTO acteur(id_allocine,nom) values(:id_allocine,:name)");
-		$stmt_insert_acteur = $this->pdo->prepare("REPLACE INTO acteur_serie(id_acteur,id_serie) values(:id_acteur,:id_film)");
+	function ajoutActeursSerie($id_serie,$aCastMember){		
+		$stmt_count = $this->pdo->prepare("SELECT count(id_acteur) as nb FROM acteur WHERE id_acteur = :id_acteur");
+		$stmt_acteur = $this->pdo->prepare("INSERT INTO acteur(id_acteur,nom) values(:id_acteur,:name)");
+		$stmt_insert_acteur = $this->pdo->prepare("REPLACE INTO acteur_serie(id_acteur,id_serie) values(:id_acteur,:id_serie)");
 		foreach($aCastMember as $value){
-			$stmt_count->execute(array('id_allocine' => $value['person']['code']));
+			$stmt_count->execute(array('id_acteur' => $value['person']['code']));
 			$nb=$stmt_count->fetch(PDO::FETCH_ASSOC);
 			if($nb['nb']==0){
-				$stmt_acteur->execute(array('id_allocine' => $value['person']['code'],'nom' => $value['person']['name']));
+				$stmt_acteur->execute(array('id_acteur' => $value['person']['code'],'nom' => $value['person']['name']));
 			}if($value['activity']['$']=="Acteur"){
-				$stmt_insert_acteur->execute(array('id_acteur' => $value['person']['code'],'id_film'=>$id));
+				$stmt_insert_acteur->execute(array('id_acteur' => $value['person']['code'],'id_serie'=>$id_serie));
 			}
 		}
 	}

@@ -11,17 +11,17 @@ class genre{
 
 	public function display_film_genre($id_genre){
 			if($id_genre!="0"){
-				$stmt = $this->pdo->prepare("SELECT f.titre,f.id FROM film as f,genre_film as g, genre as i where f.id=g.id_film AND i.id=g.id_genre AND g.id_genre=:id_genre order by f.titre");
+				$stmt = $this->pdo->prepare("SELECT f.titre,f.id_film FROM film as f,genre_film as g, genre as i where f.id_film=g.id_film AND i.id_genre=g.id_genre AND g.id_genre=:id_genre order by f.titre");
 				$stmt->execute(array('id_genre' => $id_genre));
 			}
 			else{
 				$query_Recordset1 = "";
-				$stmt = $this->pdo->prepare("SELECT f.titre,f.id FROM film as f order by f.titre");
+				$stmt = $this->pdo->prepare("SELECT f.titre,f.id_film FROM film as f order by f.titre");
 				$stmt->execute();
 			} 				
 			$i=0;
 			while($val = $stmt->fetch(PDO::FETCH_ASSOC)){					
-				echo ' <option value="'.$val['id'].'" ';
+				echo ' <option value="'.$val['id_film'].'" ';
 		  		if($i==0){echo 'selected="selected"';}
 				echo '>'.str_replace(":","",utf8_encode($val['titre'])).'</option> ';					
 				$i++;					
@@ -51,11 +51,11 @@ class genre{
 		 }
 
 		  public function lister_genre(){
-			$stmt = $this->pdo->prepare("SELECT nom,id FROM genre");
+			$stmt = $this->pdo->prepare("SELECT nom,id_genre FROM genre");
 			$stmt->execute() ;
 			$tab= array();
 			while($row_Recordset2 = $stmt->fetch(PDO::FETCH_ASSOC)){
-				$tab[$row_Recordset2['nom']]=$row_Recordset2['id'];
+				$tab[$row_Recordset2['nom']]=$row_Recordset2['id_genre'];
 			}
 			return $tab;			 
 		 }
@@ -71,7 +71,7 @@ class genre{
 		 	$query_Genre = "SELECT *  from genre order by ordre, nom";
 			$Record = mysql_query($query_Genre) or die(mysql_error());
 			while($row_Genre = mysql_fetch_assoc($Record)){
-				$query_Recordset1 = "SELECT l.id,l.lien from liens l, genre_film gf where l.id_film=gf.id_film	AND gf.id_genre = ".$row_Genre['id']." AND l.classe='0'";
+				$query_Recordset1 = "SELECT l.id_liens,l.lien from liens l, genre_film gf where l.id_film=gf.id_film	AND gf.id_genre = ".$row_Genre['id_genre']." AND l.classe='0'";
 				$Recordset1 = mysql_query($query_Recordset1) or die(mysql_error());
 				while($row_Recordset1 = mysql_fetch_assoc($Recordset1)){
 					$racine_dossier_old=dirname($row_Recordset1['lien']);
@@ -81,7 +81,7 @@ class genre{
 					if($racine_dossier_old!=$racine_dossier){		
 						$this->rename_fichier($racine_dossier,$file,$row_Recordset1['lien']);						
 					}
-					$query="update liens set lien='".$file."',classe='1' WHERE id =".$row_Recordset1['id'];					
+					$query="update liens set lien='".$file."',classe='1' WHERE id_liens =".$row_Recordset1['id_liens'];					
 					$Recordset = mysql_query($query, $this->base) or die(mysql_error());
 			
 				}
