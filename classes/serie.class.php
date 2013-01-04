@@ -3,8 +3,8 @@
 class serie{
 
 		 /**
-		 ajoute dans la base sql les données d'une nouvelle série
-		 retourne l'id de la nouvelle série
+		* ajoute dans la base sql les données d'une nouvelle série
+		*retourne l'id de la nouvelle série
 		 */
 		 private function insert_serie($id_allocine,$titre_original,$titre,$nb_saison,$nb_episodes,$synopsis,$duree_episode,$poster){
 		 		 $query = "INSERT INTO serie

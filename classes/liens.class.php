@@ -21,8 +21,8 @@ class liens{
 
 	}
 
-	public static function lien_allocine_film($id_allocine){
-		return "http://www.allocine.fr/film/fichefilm_gen_cfilm=".$id_allocine.".html";			
+	public static function lien_allocine_film($id_film){
+		return "http://www.allocine.fr/film/fichefilm_gen_cfilm=".$id_film.".html";			
 
 	}
 
@@ -63,11 +63,16 @@ class liens{
 		$this->ajouter_lien_film($id_allocine,$dossier,$dossier_old,$file, $file_old);
 	}
 
+	public function update_liens_id_film($id_new,$id_old){
+		$stmt= $this->pdo->prepare("UPDATE FROM liens SET id_film=:id_new where id_film=:id_old ");
+		$stmt->execute(array('id_new' => $id_new,'id_old' => $id_old)) ;
+	}
 
 
-	public function ajouter_lien_film($id_allocine,$dossier,$dossier_old,$file, $file_old){
+
+	public function ajouter_lien_film($id_film,$dossier,$dossier_old,$file, $file_old){
 		list($racine_dossier,$file,$lien_old)=commun::mef_lien($dossier,$dossier_old,$file, $file_old);
-		$file=$this->insert_lien_film($id_allocine,$file);
+		$file=$this->insert_lien_film($id_film,$file);
 		fichier::rename_fichier($racine_dossier,$file,$lien_old);
 	}
 
@@ -125,21 +130,7 @@ class liens{
 	}
 
 
-	public function preparer_lien_allocine($lien){
-		$stmt= $this->pdo->prepare("SELECT mot FROM mot_corrige");
-		$stmt->execute() ;
-		$extension=pathinfo($lien, PATHINFO_EXTENSION);
-		$lien=" ".str_replace($extension,'',$lien);	
-		$lien=preg_replace('#[^a-z0-9]#i',' ',$lien);
-		$lien=preg_replace('# ([a-z]) #i',' ',$lien);
-		$lien=preg_replace('#[0-9]{4}#i','',$lien);		 	
-		while($row = $stmt->fetch(PDO::FETCH_ASSOC)){
-			$lien=str_ireplace(" ".$row['mot']." ",' ',$lien);
-		}
-		$lien=preg_replace('# {2,}#i',' ',$lien);
-		return trim($lien).".".$extension;
-	}
-
+	
 
 	public function deplacer_dossier_film($dossier_init,$dossier_fin){
 		$stmt= $this->pdo->prepare("UPDATE liens SET lien = REPLACE (lien,:dossier_init,:dossier_fin)

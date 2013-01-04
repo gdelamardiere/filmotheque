@@ -1,17 +1,5 @@
 <?php
 require_once('parametres.class.php');
-/*	require_once('database.class.php');
-$db = database::getInstance();
-require_once('database.class.php');
-
-//Run a query
-$statment = $db->query('SELECT * FROM parametres');
-$result = $statment->fetch(PDO::FETCH_ASSOC);
-
-foreach ($result as $key => $value) {
-	echo $key.' - '.$value.'<br />';
-}*/
-
 
 /**
  * class fichier 

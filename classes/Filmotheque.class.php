@@ -114,24 +114,7 @@ class Filmotheque {
 		 
 		 
 		 
-		 private function update_mot_corrige($lien_init,$lien_final){	
-		 	if($lien_init!=$lien_final){
-			 	$this->base = mysql_connect($this->hostname_base, $this->username_base,$this->password_base) or trigger_error(mysql_error(),E_USER_ERROR);
-			 	mysql_select_db($this->database_base, $this->base);
-			 	$extension=pathinfo($lien_init, PATHINFO_EXTENSION);
-			 	$lien_init=str_replace(".".$extension,'',$lien_init);			 	
-			 	$lien_final=str_replace(".".$extension,'',$lien_final);	  	
-			 	$correctif=str_replace($lien_final,"",$lien_init);
-			 	$aCorrectifs=explode(" ",$correctif);
-			 	foreach($aCorrectifs as $value){
-			 		$value=strtoupper($value);
-			 		if($value!=""){ 
-						$query = "INSERT INTO mot_corrige (mot) SELECT '".$value."' FROM mot_corrige WHERE NOT EXISTS (SELECT NULL FROM mot_corrige WHERE mot = '".$value."' limit 1) limit 1";	
-						$Record = mysql_query($query, $this->base);	
-					}	
-			 	}
-		 	}
-		 }
+		
 
 		 	
 		 

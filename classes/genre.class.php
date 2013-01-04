@@ -28,6 +28,14 @@ class genre{
 			}						 
 		 }
 
+		 function ajout_genres_film($infos,$id_film){
+			$tab=$this->lister_genre();
+			foreach($infos as $genres){
+					$id_genre=(isset($tab[$genres['$']]))?$tab[$genres['$']]:$this->creer_genre($genres['$']);
+					$this->inserer_genre_film($id_genre,$id_film);
+				}
+		}
+
 
 
 	 function inserer_genre_film($id_genre,$id_film){
@@ -37,7 +45,7 @@ class genre{
 
 
 	private function creer_genre($name){
-			$stmt = $this->pdo->prepare("INSERT INTO genre (nom) VALUES(:name)";
+			$stmt = $this->pdo->prepare("INSERT INTO genre (nom) VALUES(:name)");
 			$stmt->execute(array("name"=>$name));
 			return PDO::lastInsertId(); 
 		 }

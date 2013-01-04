@@ -339,7 +339,7 @@
         {
             if ( function_exists("curl_init") )
             {
-                $curl = ($this->cURL == null) ? curl_init() : $this->_cURL;
+                $curl = (@$this->cURL == null) ? curl_init() : $this->_cURL;
                 
                 curl_setopt ($curl, CURLOPT_URL, $url);
                 curl_setopt ($curl, CURLOPT_CONNECTTIMEOUT, 10);

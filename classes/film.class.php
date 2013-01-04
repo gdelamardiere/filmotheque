@@ -1,265 +1,220 @@
 <?php 
+require_once('commun.class.php');
+require_once('database.class.php');
+require_once('genre.class.php');
+require_once('liens.class.php');
+require_once('api_allocine_helper_2.2.class.php');
+
+/**
+*Structure de la table film:
+*id_film
+*/
 
 class film{
 
-	
-		
-		 
-		 		 
-		 public function creer_film_new($id_allocine, $dossier,$dossier_old,$file, $file_old){
-			$racine_dossier=$this->racine_dossier($dossier);
-			$racine_dossier_old=$this->racine_dossier($dossier_old);
-			$lien=$racine_dossier."/".$file;
-			$lien_old=($file_old!=""&&$racine_dossier_old!="")?$racine_dossier_old."/".$file_old:"";
-			$this->rename_fichier($racine_dossier,$lien,$lien_old);			 
-			return $this->creer_film2($id_allocine,$lien);			 
-		 }
-		 
-		 
-		 public function creer_film2($id_allocine, $lien){
-			$this->base = mysql_connect($this->hostname_base, $this->username_base,$this->password_base) or trigger_error(mysql_error(),E_USER_ERROR);
-		 	mysql_select_db($this->database_base, $this->base);	
-			if(!$this->verif_existe_film($id_allocine)){
-				$allo= new AlloHelper;			
-	 		 	$info=$allo->movie( $id_allocine);
-	 		 	$infos=$info->getArray();
-	
-			}
-			$titre_original="";
-			if(isset($infos['originalTitle'])){$titre_original=htmlspecialchars($infos['originalTitle'],ENT_QUOTES);}
-			$titre="";
-			if(isset($infos['title'])){$titre=htmlspecialchars($infos['title'],ENT_QUOTES);}
-			$annee="";
-			if(isset($infos['productionYear'])){$annee=str_replace('-','',htmlspecialchars($infos['productionYear'],ENT_QUOTES));}
-			$duree="";
-			if(isset($infos['runtime'])){$duree=$infos['runtime'];}
-			$synopsis="";
-			if(isset($infos['synopsis'])){$synopsis=htmlspecialchars($infos['synopsis'],ENT_QUOTES);}
-			$bande="";
-			if(isset($infos['trailer']['href'])){$bande=htmlspecialchars($infos['trailer']['href'],ENT_QUOTES);}
-			$poster="";
-			if(isset($infos['poster']["href"])){$poster=htmlspecialchars($infos['poster']["href"],ENT_QUOTES);}
-			$fanart=$this->fanart($titre,$annee);			
-			$id_film=$this->insert_film($id_allocine,$titre_original,$titre,$annee,$duree,$synopsis,$bande,$lien,$poster,$fanart);
-			//remplissage du genre
-			$tab=$this->lister_genre();
+	private $pdo;
+	private $genre;
+	private $acteur;
+	private $lien;
+	private $mot_corrige;
+	private $allo;
+
+
+
+
+	function __construct(){
+		$this->pdo=database::getInstance();
+		$this->genre=new genre();
+		$this->acteur=new acteurs();
+		$this->lien=new liens();
+		$this->mot_corrige=new mot_corrige();
+		$this->allo=new AlloHelper();
+	}
+
+
+
+	public function creer_film($id_film, $dossier,$dossier_old,$file, $file_old){
+		$this->creer_data_film($id_film);
+		$this->lien->ajouter_lien_film($id_film,$dossier,$dossier_old,$file, $file_old);
+		return $id_film;			 
+	}
+
+	private function creer_data_film($id_film){
+		if(!$this->verif_existe_film($id_film)){
+			$info=$this->allo->movie( $id_film);
+			$infos=$info->getArray();	
+			$titre_original=(isset($infos['originalTitle']))?$infos['originalTitle']:"";
+			$titre_original=(isset($infos['title']))?$infos['title']:"";
+			$titre_original=(isset($infos['productionYear']))?$infos['productionYear']:"";
+			$titre_original=(isset($infos['runtime']))?$infos['runtime']:"";
+			$titre_original=(isset($infos['synopsis']))?$infos['synopsis']:"";
+			$titre_original=(isset($infos['trailer']['href']))?$infos['trailer']['href']:"";
+			$titre_original=(isset($infos['poster']["href"]))?$infos['poster']["href"]:"";
+			$fanart=images::fanart($titre,$annee);			
+			$this->insert_film($id_film,$titre_original,$titre,$annee,$duree,$synopsis,$bande,$poster,$fanart);
+				//remplissage du genre
 			if(isset($infos['genre'])){
-				foreach($infos['genre'] as $genres){
-					$id_genre=(isset($tab[$genres['$']]))?$tab[$genres['$']]:$this->creer_genre($genres['$']);
-					$this->inserer_genre_film($id_genre,$id_film);
+				$this->genre->ajout_genres_film($infos['genre'],$id_film);
+			}	
+			if(isset($infos['castMember'])){	
+				$this->acteur->ajoutActeursFilm($id_film,$infos['castMember']);
+			}
+		}	 
+	}
+
+
+
+
+	public function modifier_film($id_film,$id_old){
+		$this->delete_film($id_old);
+		$this->creer_data_film($id_film);
+		$this->lien->update_liens_id_film($id_film,$id_old);
+		return $id_film;			
+	}
+
+
+
+	public function delete_film($id_film,$supr_lien=false){
+		if($supr_lien=="true" || $supr_lien == true){$this->delete_all_liens_film($id_film);}
+		$stmt= $this->pdo->prepare("DELETE FROM film where id_film =:id_film LIMIT 1");
+		$stmt->execute(array('id_film' => $id_film));		
+	}
+
+
+	/**a faire
+	afficher la bande annonce
+	ne pas appeller ici update mot_corrige
+	*/
+	public function rechercher_film_allocine($name,$name_init,$echo=TRUE){
+		$this->mot_corrige->update_mot_corrige($name_init,$name);
+		$film=str_replace(".avi","",htmlspecialchars($name,ENT_QUOTES));
+		$film=str_replace(".mkv","",$film);
+		$film=str_replace(".mp4","",$film);
+		$film=str_replace(".AVI","",$film);
+		$film=str_replace(".MKV","",$film);
+		$film=str_replace(".MP4","",$film);
+		$allo= new AlloHelper;
+		$info=$allo->search( $film, 1, 15, false, array("movie") );
+		$infos=$info->getArray();
+
+		if($infos["totalResults"]==1){	 		  
+			if(isset($infos["movie"][0]["code"])){
+				$id_film=$infos["movie"][0]["code"];
+				$info=$allo->movie( $id_film, 'small');
+				$infos=$info->getArray();
+				$poster="";
+				if(isset($infos["poster"]["href"])){$poster=htmlspecialchars($infos["poster"]["href"],ENT_QUOTES);}
+				if(!$this->verif_existe_film($id_film)){
+					$synopsis=(isset($infos["synopsisShort"]))?$infos["synopsisShort"]:"";
 				}
+				else{$synopsis='<p onclick="lancer_film(\''.$this->lien_film_id_film($id_film).'\')">ce film existe deja</p>';}
+				$tab=array($id_film,$synopsis,$poster);		 		 	
 			}
-			
-			
-			//$this->ajout_realisateur_film($id_film,$infos);
-			
-			//acteurs
-			$this->ajout_acteur_film($id_film,$infos);
-			return $id_film;
-		 }
-		 
-		 
-		 
-		  public function modifier_film($id_allocine,$id_old){
-			$this->base = mysql_connect($this->hostname_base, $this->username_base,$this->password_base) or trigger_error(mysql_error(),E_USER_ERROR);
-		 	mysql_select_db($this->database_base, $this->base);
-			$query = "SELECT lien FROM liens where id_film='".$id_old."'";
-			$Recordset = mysql_query($query, $this->base) ;
-			$liens=array();
-			$i=0;
-			while($row = mysql_fetch_assoc($Recordset)){
-				$liens[]=$row['lien'];
-				$i++;
-			}
-			
-			//suppression du vieux film
-			$this->delete_film($id_old);
-			
-			//si ce film existe deja on modifie juste le lien_pc			
-			$query = "SELECT id FROM film where id_allocine='".$id_allocine."'";
-			$Recordset1 = mysql_query($query, $this->base) ;
-			$row1 = mysql_fetch_assoc($Recordset1);
-			if(isset($row1['id'])&&$i>0){
-				foreach($liens as $lien){
-					$this->ajouter_lien_film2($id_allocine,$lien);	
-				}	
-				return $row1['id'];
-			}
-			if($i==0){
-				$liens[0]='NULL';
-				$id = $this->creer_film2($id_allocine, $liens[0]);
-			}
-			else{
-				$id = $this->creer_film2($id_allocine, $liens[0]);
-				for($j=1; $j<$i;$j++){
-					$this->ajouter_lien_film2($id_allocine,$lien);
+			else{$tab=array("","film introuvable","");}
+			if($echo){echo utf8_encode("1__synopsis__".$tab[0]."__synopsis__".$tab[1]."__synopsis__".$tab[2]); }
+		}
+		else if($infos["totalResults"]>1){$tab=array();
+			if($echo){echo '<table>';}
+			foreach($infos["movie"] as $array){
+				$id_film=$array["code"];
+				$titre=$array["originalTitle"];	 				
+				$annee=$array["productionYear"];
+				$poster=$array["posterURL"];					
+				if($echo){			
+					if($this->verif_existe_film($id_film)){
+						echo '<tr><td><img  onclick="lancer_film(\''.$this->lien_film_id_film($id_film).'\')" alt="poster" src="'.$poster.'" width="50px" /><br>'.$titre.' ('.$annee.')<br>'.$id_film;
+						echo '<br>ce film existe deja';
+					}
+					else{
+						echo '<tr><td><img src="'.$poster.'" width="50px" /><br>'.$titre.' ('.$annee.')<br>'.$id_film;
+					}
+					echo '</td></tr>';						
 				}
-			}			
-			return $id;			
-		}
-
-
-				 
-		 public function delete_film($id,$supr=false){
-			$this->base = mysql_connect($this->hostname_base, $this->username_base,$this->password_base) or trigger_error(mysql_error(),E_USER_ERROR);
-		 	mysql_select_db($this->database_base, $this->base);
-			if($supr=="true" || $supr == true){$this->delete_all_liens_film($id);}
-			$query="delete from film WHERE id='".$id."'";
-			$Recordset = mysql_query($query, $this->base) ;			
-		 }
-		 
-		 
-		/**a faire
-		afficher la bande annonce*/
-		public function rechercher_film_allocine($name,$name_init,$echo=TRUE){
-			$this->update_mot_corrige($name_init,$name);
-			$film=str_replace(".avi","",htmlspecialchars($name,ENT_QUOTES));
-			$film=str_replace(".mkv","",$film);
-			$film=str_replace(".mp4","",$film);
-			$film=str_replace(".AVI","",$film);
-			$film=str_replace(".MKV","",$film);
-			$film=str_replace(".MP4","",$film);
-			 $allo= new AlloHelper;
-	 		 $info=$allo->search( $film, 1, 15, false, array("movie") );
-	 		 $infos=$info->getArray();
-	 		
-	 		if($infos["totalResults"]==1){	 		  
-		 		 if(isset($infos["movie"][0]["code"])){
-		 		 	$id_allocine=$infos["movie"][0]["code"];
-		 		 	$info=$allo->movie( $id_allocine, 'small');
-		 		 	$infos=$info->getArray();
-		 		 	$poster="";
-					if(isset($infos["poster"]["href"])){$poster=htmlspecialchars($infos["poster"]["href"],ENT_QUOTES);}
-					if(!$this->verif_existe_film($id_allocine)){
-						$synopsis=(isset($infos["synopsisShort"]))?$infos["synopsisShort"]:"";
-					}
-					else{$synopsis='<p onclick="lancer_film(\''.$this->lien_film_id_allocine($id_allocine).'\')">ce film existe deja</p>';}
-					$tab=array($id_allocine,$synopsis,$poster);		 		 	
-		 		 }
-		 		 else{$tab=array("","film introuvable","");}
-				if($echo){echo utf8_encode("1__synopsis__".$tab[0]."__synopsis__".$tab[1]."__synopsis__".$tab[2]); }
-	 		}
-	 		else if($infos["totalResults"]>1){$tab=array();
-	 			if($echo){echo '<table>';}
-	 			foreach($infos["movie"] as $array){
-	 				$id_allocine=$array["code"];
-	 				$titre=$array["originalTitle"];	 				
-	 				$annee=$array["productionYear"];
-		 		 	$poster=$array["posterURL"];					
-					if($echo){			
-						if($this->verif_existe_film($id_allocine)){
-							echo '<tr><td><img  onclick="lancer_film(\''.$this->lien_film_id_allocine($id_allocine).'\')" alt="poster" src="'.$poster.'" width="50px" /><br>'.$titre.' ('.$annee.')<br>'.$id_allocine;
-							echo '<br>ce film existe deja';
-						}
-						else{
-							echo '<tr><td><img src="'.$poster.'" width="50px" /><br>'.$titre.' ('.$annee.')<br>'.$id_allocine;
-						}
-						echo '</td></tr>';						
-					}
-					$tab[]=array($id_allocine,$titre,$annee,$poster);	 
-	 			}
-	 			if($echo){echo '</table>';}
-	 		}
-	 		
-			
-			
-			
-			else{
-				$tab=array("0","","film introuvable","");
-				if($echo){echo "film introuvable"; }
+				$tab[]=array($id_film,$titre,$annee,$poster);	 
 			}
-			
-			return $tab;
+			if($echo){echo '</table>';}
 		}
-		
-		
-		
-		/**a faire
-		afficher la bande annonce*/
-		public function rechercher_film_id_allocine($id,$echo=TRUE){
-			 $allo= new AlloHelper;			
- 		 	$info=$allo->movie( $id, 'small');
- 		 	$infos=$info->getArray();
- 		 	$poster="";
-			if(isset($infos["poster"]["href"])){$poster=htmlspecialchars($infos["poster"]["href"],ENT_QUOTES);}
-			if(!$this->verif_existe_film($id)){
-				$synopsis=(isset($infos["synopsisShort"]))?$infos["synopsisShort"]:"";
-			}
-			else{$synopsis="ce film existe deja";}
-			$tab=array($id,$synopsis,$poster);	
-			if(!isset($infos["code"])){$tab=array("","film introuvable","");}
-			if($echo){echo utf8_encode($tab[0]."__synopsis__".$tab[1]."__synopsis__".$tab[2]); }
-			return $tab;
-		}
-		 
-		 
-		
-		
-		
-		
-		
-		
-		 
-		
-		 
-		 
-		 
-		 
-		 private function verif_existe_film($id_allocine){
-		 		 $query_Recordset = "SELECT id FROM film WHERE id_allocine = ".$id_allocine." ";
-				 $Recordset = mysql_query($query_Recordset, $this->base) ;
-				 $row_Recordset = mysql_fetch_assoc($Recordset);
-				 if(isset($row_Recordset['id'])){return true;}
-				 else return false;
-		 }
-		 
-		  
-		 
-		 private function insert_film($id_allocine,$titre_original,$titre,$annee,$duree,$synopsis,$bande,$lien,$poster,$fanart){
-		 		 $query = "INSERT INTO film (id_allocine,titre_original,titre,annee_production,duree,synopsis,bande_annonce,poster,fanart) VALUES('".$id_allocine."','".$titre_original."','".$titre."','".$annee."','".$duree."','".$synopsis."','".$bande."','".$poster."','".$fanart."')";
-		 		 $Record = mysql_query($query, $this->base);
-		 		 $id=mysql_insert_id();
-		 		 $query= 'INSERT INTO liens (id_film,lien,nom) VALUES('.$id.', "'.$lien.'","liens1") ';
-				$Recordset = mysql_query($query, $this->base) ;
-		 		 return $id;	
-		 }
-		 
-		 
-				 
-		 
-		 		 
-		 
-		 
-		 
-		 public function modifer_interet_film($id,$value){
-		 	$this->base = mysql_connect($this->hostname_base, $this->username_base,$this->password_base) or trigger_error(mysql_error(),E_USER_ERROR);
-		 	mysql_select_db($this->database_base, $this->base);	
-			$query = "update film SET interet='".$value."' where id='".$id."' ";
-			$Recordset = mysql_query($query, $this->base) ;
-		 }
-		 
-		 
-		 
-		 /*******fin film***/
-		 
-		 
-		 
-		 
 
-		 
-		 
-		  
-		 
-		 
-		 public function modifier_film_manuellement(){}
-		 
 		
-		 
-		 
-		 
 		
-		 
+		
+		else{
+			$tab=array("0","","film introuvable","");
+			if($echo){echo "film introuvable"; }
+		}
+		
+		return $tab;
+	}
+
+
+
+	/**a faire
+	afficher la bande annonce*/
+	public function rechercher_film_id_film($id_film,$echo=TRUE){
+		$info=$this->allo->movie( $id_film, 'small');
+		$infos=$info->getArray();
+		$poster="";
+		if(isset($infos["poster"]["href"])){$poster=htmlspecialchars($infos["poster"]["href"],ENT_QUOTES);}
+		if(!$this->verif_existe_film($id_film)){
+			$synopsis=(isset($infos["synopsisShort"]))?$infos["synopsisShort"]:"";
+		}
+		else{$synopsis="ce film existe deja";}
+		$tab=array($id_film,$synopsis,$poster);	
+		if(!isset($infos["code"])){$tab=array("","film introuvable","");}
+		if($echo){echo utf8_encode($tab[0]."__synopsis__".$tab[1]."__synopsis__".$tab[2]); }
+		return $tab;
+	}
+
+
+
+
+	private function verif_existe_film($id_film){
+		$stmt= $this->pdo->prepare("SELECT count(id_film) as nb FROM film WHERE id_film = :id_film ");
+		$stmt->execute(array('id_film' => $id_film)) ;
+		$row = $stmt->fetch(PDO::FETCH_ASSOC);
+		$nb= $row['nb']+1;
+		if($nb > 1){				
+			return true;	
+		}
+		else return false;
+	}
+
+
+
+	private function insert_film($id_film,$titre_original,$titre,$annee,$duree,$synopsis,$bande,$poster,$fanart){
+		$stmt= $this->pdo->prepare("INSERT INTO film (id_film,titre_original,titre,annee_production,duree,synopsis,bande_annonce,poster,fanart)
+									VALUES(:id_film,:titre_original,:titre,:annee,:duree,:synopsis,:bande,:poster,:fanart)");
+		$stmt->execute(array('id_film' => $id_film,
+			'titre_original' => $titre_original,
+			'titre' => $titre,
+			'annee' => $annee,
+			'duree' => $duree,
+			'synopsis' => $synopsis,
+			'bande' => $bande,
+			'poster' => $poster,
+			'fanart' => $fanart)) ;
+		return $id_film;	
+	}
+
+
+
+	public function modifer_interet_film($id_film,$value){
+		$stmt= $this->pdo->prepare("update film SET interet=:value where id_film=:id_film");
+		$stmt->execute(array('id_film' => $id_film,'value' => $value));
+	}
+
+
+
+	public function modifier_film_manuellement(){}
+
+
+
+
+
+
+
 
 }
 
-?>
+
+	?>
