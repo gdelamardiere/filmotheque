@@ -60,7 +60,17 @@ class genre{
 			return $tab;			 
 		 }
 
+		 public function list_genre_film(){
+		 	$stmt = $this->pdo->prepare("SELECT nom,g.id_genre, count(id_film) as c FROM `genre_film` as l,genre as g WHERE l.id_genre=g.id_genre group by g.id_genre order by c desc, g.id_genre");
+			$stmt->execute() ;
+			return $stmt->fetchAll(PDO::FETCH_ASSOC);
+		 }
 
+		 public function genre_film($id_film){
+		 	$stmt = $this->pdo->prepare("SELECT nom,g.id_genre FROM genre as g,genre_film where g.id_genre = genre_film.id_genre AND genre_film.id_film=:id_film");
+			$stmt->execute(array("id_film"=>$id_film)) ;
+			return $stmt->fetchAll(PDO::FETCH_ASSOC);
+		 }
 
 
 

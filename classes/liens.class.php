@@ -60,7 +60,7 @@ class liens{
 
 	public function remplacer_lien_film($id_film,$dossier,$dossier_old,$file, $file_old){
 		$this->delete_all_liens_film($id_film);
-		$this->ajouter_lien_film($id_allocine,$dossier,$dossier_old,$file, $file_old);
+		$this->ajouter_lien_film($id_film,$dossier,$dossier_old,$file, $file_old);
 	}
 
 	public function update_liens_id_film($id_new,$id_old){

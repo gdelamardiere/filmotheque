@@ -1,8 +1,7 @@
-<?php 
+<?php
+require_once('factory.class.php');
 require_once('commun.class.php');
 require_once('database.class.php');
-require_once('genre.class.php');
-require_once('liens.class.php');
 require_once('api_allocine_helper_2.2.class.php');
 
 /**
@@ -24,13 +23,49 @@ class film{
 
 	function __construct(){
 		$this->pdo=database::getInstance();
-		$this->genre=new genre();
-		$this->acteur=new acteurs();
-		$this->lien=new liens();
-		$this->mot_corrige=new mot_corrige();
+		$this->genre=factory::load("genre");
+		$this->acteur=factory::load("acteurs");
+		$this->lien=factory::load("liens");
+		//$this->mot_corrige=new mot_corrige();
+		$this->mot_corrige=factory::load("mot_corrige");
 		$this->allo=new AlloHelper();
 	}
 
+
+	public function list_film($aParams){
+		$select="SELECT distinct f.* ";
+		$from=" FROM film f";
+		$sCondition="";
+		$aCondition=array();
+		if(!empty($aParams)){
+			foreach($aparams as $key=>$value){
+				switch ($key) {
+					case 'titre':
+						$sCondition.=($sCondition=="")?"WHERE ":"AND ";
+						$sCondition.="where f.titre LIKE :titre1 or f.titre LIKE :titre2 or f.titre_original LIKE :titre1 or f.titre_original LIKE :titre2";
+						$aCondition["titre1"]="%".$value."%";
+						$aCondition["titre2"]="%".utf8_decode($value)."%";
+						break;
+					case 'doublon':
+						$sCondition.=($sCondition=="")?"WHERE ":"AND ";
+						$sCondition.="f.id_film in(SELECT id_film FROM liens group by id_film  having count(id_film)>=2)";
+						break;
+					case 'acteur':
+						$from.=",acteur_film af, acteur a";
+						$sCondition.=($sCondition=="")?"WHERE ":"AND ";
+						$sCondition.="a.id_acteur=af.id_acteur AND af.id_film=f.id_film AND a.nom LIKE :acteur";
+						$aCondition["acteur"]="%".$value."%";
+						break;
+					
+					default:
+						break;
+				}
+			}
+		}
+		$stmt= $this->pdo->prepare($select.$from.$sCondition." order by f.date_crea,f.titre");
+		$stmt->execute($aCondition);
+		return $stmt->fetchAll(PDO::FETCH_ASSOC);
+	}
 
 
 	public function creer_film($id_film, $dossier,$dossier_old,$file, $file_old){

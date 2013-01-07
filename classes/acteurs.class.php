@@ -4,25 +4,7 @@ require_once('database.class.php');
 class acteurs{
 	private $pdo;
 
-	public function getIdAllocine()
 	
-	{
-
-		return $this->id_allocine;
-
-	}
-	
-	
-	
-	public function setIdAllocine($id_allocine)
-	
-	{
-
-		$this->id_allocine = $id_allocine;
-
-		return $this;
-
-	}
 	
 	function __construct(){
 		$this->pdo=database::getInstance();
@@ -38,7 +20,7 @@ class acteurs{
 
 
 	/**
-	 * @param  [type] $id          id_allocine du film
+	 * @param  [type] $id_film          id_allocine du film
 	 * @param  [type] $aCastMember [castMember] => Array([0] => Array([person] => Array([code] => 38756,[name] => Patrick Lussier),
 	 *                             									[activity] => Array([$] => Réalisateur),
 	 *                                      						[role] => John Milton)
@@ -79,6 +61,17 @@ class acteurs{
 		}
 	}
 
+	public function list_realisateur_film($id_film){
+		 	$stmt = $this->pdo->prepare("SELECT a.nom as nom,a.id_acteur as id_acteur FROM acteur as a,realisateur_film as l where a.id_acteur = l.id_realisateur AND l.id_film=:id_film");
+			$stmt->execute(array("id_film"=>$id_film)) ;
+			return $stmt->fetchAll(PDO::FETCH_ASSOC);
+		 }
+
+	public function list_acteur_film($id_film){
+		 	$stmt = $this->pdo->prepare("SELECT  a.nom as nom,a.id_acteur,l.role as role FROM acteur as a,acteur_film as l where a.id_acteur = l.id_acteur AND l.id_film=:id_film");
+			$stmt->execute(array("id_film"=>$id_film)) ;
+			return $stmt->fetchAll(PDO::FETCH_ASSOC);
+		 }
 /*
 function findIDActeurSerie($name){
 		$acteur=$this->helper->search( $name, 1, 1, false, array("person"));

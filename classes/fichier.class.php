@@ -20,7 +20,8 @@ class fichier{
 		}
 		$lien=str_replace("\'"," ",$lien);
 		if (!file_exists($dossier)&& $dossier!="") {
-			system("mkdir",array($dossier));
+			$param=array($dosier);
+			system("mkdir",$param);
 		}		
 		
 		$extension=pathinfo($lien, PATHINFO_EXTENSION);
@@ -29,11 +30,12 @@ class fichier{
 			$sous_titre_old=str_replace($extension,$sub,$lien_old);
 			if (file_exists($sous_titre_old)) {
 				$sous_titre=str_replace($extension,$sub,$lien);
-				self::executer("mv",array($sous_titre_old,$sous_titre));
+				$param=array($sous_titre_old,$sous_titre);
+				self::executer("mv",$param);
 			}	
 		}
-
-		echo self::executer("mv",array($lien_old,$lien));
+		$param=array($lien_old,$lien);
+		echo self::executer("mv",$param);
 		return TRUE;
 	}
 	
@@ -61,7 +63,8 @@ class fichier{
 	  * @return vide
 	  */
 	 public static function afficher_lien_finder($lien){
-	 	self::executer("open",array($lien));
+	 	$param=array($lien);
+	 	self::executer("open",$param);
 	 }
 	 
 	 
@@ -72,7 +75,8 @@ class fichier{
 	 * @return vide
 	 */
 	public static function lancer_film($lien){
-		self::executer("vlc",array($lien));
+		$param=array($lien);
+		self::executer("vlc",$param);
 	}
 
 
@@ -83,11 +87,11 @@ class fichier{
 	  * @todo: supprimer egalement les sous-titres
 	  */
 	 public static function delete_file($link){
-	 	self::executer("delete",array($lien);
+	 	$param=array($lien);
+	 	self::executer("delete",$param);
 	 }
 	 
-	}
-
+	
 
 	/** 
 	 * @param  string $operation (mv, delete, mkdir, vlc, explorateur)
@@ -96,7 +100,7 @@ class fichier{
 	 */
 	private static function executer($operation,$aParams){
 		$command="";
-		switch $operation{
+		switch ($operation){
 			case "mv": $command="mv \"".$aParams[0]."\" \"".$aParams[1]."\"";
 			break;
 

@@ -3,9 +3,9 @@ class factory
 {
   public static function load($classe)
   {
-    if (file_exists($chemin = $classe . '.class.php'))
+    if (file_exists($chemin = "classes/".$classe . '.class.php'))
     {
-      require $chemin;
+      require_once $chemin;
       return new $classe;
     }
     else
