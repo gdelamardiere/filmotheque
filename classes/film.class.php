@@ -32,17 +32,22 @@ class film{
 	}
 
 
-	public function list_film($aParams){
+	public function list_film($aParams,$limit=false){
 		$select="SELECT distinct f.* ";
-		$from=" FROM film f";
+		$from=" FROM film f ";
 		$sCondition="";
 		$aCondition=array();
 		if(!empty($aParams)){
-			foreach($aparams as $key=>$value){
+			foreach($aParams as $key=>$value){
 				switch ($key) {
+					case 'id_film':
+						$sCondition.=($sCondition=="")?"WHERE ":"AND ";
+						$sCondition.="f.id_film=:id_film";
+						$aCondition["id_film"]=$value;
+						break;
 					case 'titre':
 						$sCondition.=($sCondition=="")?"WHERE ":"AND ";
-						$sCondition.="where f.titre LIKE :titre1 or f.titre LIKE :titre2 or f.titre_original LIKE :titre1 or f.titre_original LIKE :titre2";
+						$sCondition.=" f.titre LIKE :titre1 or f.titre LIKE :titre2 or f.titre_original LIKE :titre1 or f.titre_original LIKE :titre2";
 						$aCondition["titre1"]="%".$value."%";
 						$aCondition["titre2"]="%".utf8_decode($value)."%";
 						break;
@@ -51,7 +56,7 @@ class film{
 						$sCondition.="f.id_film in(SELECT id_film FROM liens group by id_film  having count(id_film)>=2)";
 						break;
 					case 'acteur':
-						$from.=",acteur_film af, acteur a";
+						$from.=",acteur_film af, acteur a ";
 						$sCondition.=($sCondition=="")?"WHERE ":"AND ";
 						$sCondition.="a.id_acteur=af.id_acteur AND af.id_film=f.id_film AND a.nom LIKE :acteur";
 						$aCondition["acteur"]="%".$value."%";
@@ -64,7 +69,11 @@ class film{
 		}
 		$stmt= $this->pdo->prepare($select.$from.$sCondition." order by f.date_crea,f.titre");
 		$stmt->execute($aCondition);
-		return $stmt->fetchAll(PDO::FETCH_ASSOC);
+		$result=$stmt->fetchAll(PDO::FETCH_ASSOC);
+		if($limit!==false){
+			$result=$result[0];
+		}
+		return $result;
 	}
 
 
@@ -233,7 +242,7 @@ class film{
 
 
 
-	public function modifer_interet_film($id_film,$value){
+	public function modifier_interet_film($id_film,$value){
 		$stmt= $this->pdo->prepare("update film SET interet=:value where id_film=:id_film");
 		$stmt->execute(array('id_film' => $id_film,'value' => $value));
 	}

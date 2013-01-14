@@ -1,5 +1,5 @@
 	function afficher(name){alert(name);
-		fichier="classe_allocine/Filmotheque.class.php?fonction=afficher_lien_finder&nb_var=1&var0="+name;
+		fichier="classes/Filmotheque.class.php?fonction=afficher_lien_finder&nb_var=1&var0="+name;
 		lancer_script(fichier,true);
 	}
 	
@@ -45,27 +45,22 @@
 	}
 	
 	function change(liste){
-		
-		document.getElementById('content_left_'+temp).style.display="none";
-		document.getElementById('entete_'+temp).style.display="none";
 		id=liste.options[liste.options.selectedIndex].value;
-		temp=id;
-		titre=liste.options[liste.options.selectedIndex].text;
-		document.getElementById('body').style.background="url('"+x[temp]+"') TOP CENTER";
-		document.getElementById('content_left_'+id).style.display="inline";
-		document.getElementById('entete_'+id).style.display="table-row";
+		contentFilm=lancer_script("tpl_film.php?id_film="+id,false);
+		$('content_left').set('html',contentFilm);
+		document.getElementById('body').style.background="url('"+x[id]+"') TOP CENTER";
 		document.getElementById('principale3').style.marginTop='0px';
 		hauteur = parseInt(window.innerHeight);	
-		hauteur=hauteur - parseInt(document.getElementById('entete_'+id).offsetHeight);
-		hauteur = hauteur - parseInt(document.getElementById('table_principale').offsetHeight)+13;
+		hauteur=hauteur - parseInt(document.getElementById('entete').offsetHeight);
+		hauteur = hauteur - parseInt(document.getElementById('table_principale').offsetHeight)+46;
 		if(hauteur>0){document.getElementById('principale3').style.marginTop=hauteur+'px';}
 	}
 	
 	
 	function change_genre(liste){
 		var retour_liste ="";
-		id=liste.options[liste.options.selectedIndex].value;
-		fichier="classe_allocine/Filmotheque.class.php?fonction=liste_film_genre&nb_var=1&var0="+id;
+		id_genre=liste.options[liste.options.selectedIndex].value;
+		fichier="classes/Filmotheque.class.php?class=genre&fonction=display_film_genre&nb_var=1&var0="+id_genre;
 		retour_liste=lancer_script(fichier,false);
 		sel_rep=document.getElementById('select_principale');
 		sel_rep.innerHTML=retour_liste;
@@ -79,19 +74,19 @@
 	}
 
 	function lancer_film(lien){
-		fichier="classe_allocine/Filmotheque.class.php?fonction=lancer_film&nb_var=1&var0="+lien;
+		fichier="classes/Filmotheque.class.php?class=fichier&fonction=lancer_film&nb_var=1&var0="+lien;
 		retour_liste=lancer_script(fichier,true);
 	}
 	
 	function modifier_film_id(j,id){
 		id_allocine=document.getElementById('new_id_allocine_'+j).value;
-		fichier="classe_allocine/Filmotheque.class.php?fonction=modifier_film&nb_var=2&var0="+id_allocine+"&var1="+id;
+		fichier="classes/Filmotheque.class.php?class=film&fonction=modifier_film&nb_var=2&var0="+id_allocine+"&var1="+id;
 		lancer_script(fichier,true);
 	}
 	
 	function maj_fanart(j,id){
 		lien=document.getElementById('new_fanart_'+j).value;
-		fichier="classe_allocine/Filmotheque.class.php?fonction=maj_fanart_film&nb_var=2&var0="+id+"&var1="+lien;
+		fichier="classes/Filmotheque.class.php?class=images&fonction=maj_fanart_film&nb_var=2&var0="+id+"&var1="+lien;
 		lancer_script(fichier,true);
 	}
 	
@@ -99,7 +94,7 @@
 	
 	function suppr(id){
 		if(confirm('etes vous sur de supprimer ce film')){
-			fichier="classe_allocine/Filmotheque.class.php?fonction=delete_film&nb_var=2&var0="+id+"&var1=true";
+			fichier="classes/Filmotheque.class.php?class=film&fonction=delete_film&nb_var=2&var0="+id+"&var1=true";
 			lancer_script(fichier,true);
 			
 		}
@@ -108,14 +103,14 @@
 	
 	function supprimer_lien(lien){
 		if(confirm('etes vous sur de supprimer ce fichier')){
-			fichier="classe_allocine/Filmotheque.class.php?fonction=delete_lien_film&nb_var=2&var0="+lien+"&var1=true";
+			fichier="classes/Filmotheque.class.php?class=liens&fonction=delete_lien_film&nb_var=2&var0="+lien+"&var1=true";
 			lancer_script(fichier,true);
 			
 		}
 	}
 	
 	function voter_interet(id,value){
-		fichier="classe_allocine/Filmotheque.class.php?fonction=modifer_interet_film&nb_var=2&var0="+id+"&var1="+value;
+		fichier="classes/Filmotheque.class.php?class=film&fonction=modifier_interet_film&nb_var=2&var0="+id+"&var1="+value;
 		lancer_script(fichier,true);
 		for(i=1;i<=value;i++){
 			document.getElementById('etoile_'+id+'_'+i).src='images/etoile_pleine.png';
@@ -129,7 +124,7 @@
 	
 	function voter_qualite(id,liste){
 		value=liste.options[liste.options.selectedIndex].value;
-		fichier="classe_allocine/Filmotheque.class.php?fonction=modifer_qualite_lien_film&nb_var=2&var0="+id+"&var1="+value;
+		fichier="classes/Filmotheque.class.php?class=liens&fonction=modifer_qualite_lien&nb_var=2&var0="+id+"&var1="+value;
 		lancer_script(fichier,true);
 	}
 	
@@ -166,12 +161,12 @@
 	
 	
 	function maj_serie(id){
-		fichier="classe_allocine/Filmotheque.class.php?fonction=maj_serie&nb_var=1&var0="+id;
+		fichier="classes/Filmotheque.class.php?class=serie&fonction=maj_serie&nb_var=1&var0="+id;
 		lancer_script(fichier,true);
 	}
 	
 	function maj_all_serie(id){
-		fichier="classe_allocine/Filmotheque.class.php?fonction=maj_all_serie";
+		fichier="classes/Filmotheque.class.php?class=serie&fonction=maj_all_serie";
 		lancer_script(fichier,true);
 	}
 
