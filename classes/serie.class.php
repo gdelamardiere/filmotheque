@@ -1,6 +1,28 @@
 <?php 
+require_once('factory.class.php');
+require_once('commun.class.php');
+require_once('database.class.php');
+require_once('api_allocine_helper_2.2.class.php');
 
 class serie{
+
+private $pdo;
+	private $genre;
+	private $acteur;
+	private $lien;
+	private $mot_corrige;
+	private $allo;
+
+	function __construct(){
+		$this->pdo=database::getInstance();
+		$this->genre=factory::load("genre");
+		$this->acteur=factory::load("acteurs");
+		$this->lien=factory::load("liens");
+		//$this->mot_corrige=new mot_corrige();
+		$this->mot_corrige=factory::load("mot_corrige");
+		$this->allo=new AlloHelper();
+	}
+
 
 		 /**
 		* ajoute dans la base sql les données d'une nouvelle série
@@ -16,19 +38,14 @@ class serie{
 
 
 		private function info_serie($str){
-		 		// $serietv = new AlloSerie($str);var_dump($serietv);die();
-			$allo= new AlloHelper;
-			$info=$allo->search( $str, 1, 10, false, array("tvseries") );
+			$info=$this->allo->search( $str, 1, 10, false, array("tvseries") );
 			$infos=$info->getArray();
-
 			$id_allocine="";
 			if(isset($infos["tvseries"][0]['code'])){
 				$id_allocine=$infos["tvseries"][0]['code'];
-				$infos=$allo->tvserie($id_allocine);
+				$infos=$this->allo->tvserie($id_allocine);
 				$infos=$infos->getArray();
-		 		 	//echo "<pre>"; var_dump($infos);echo "</pre>"; 
 			}
-		 	 //die();
 			$titre_original="";
 			if(isset($infos['originalTitle'])){$titre_original=htmlspecialchars($infos['originalTitle'],ENT_QUOTES);}
 
@@ -62,7 +79,7 @@ class serie{
 
 
 		 /**
-		 parsage pour recuperer le synopsis des episodes
+		 *parsage pour recuperer le synopsis des episodes
 		 */
 		 private function ajout_all_episode($id,$id_serie,$nb_saison){
 		 	if($nb_saison==1){
@@ -185,9 +202,6 @@ class serie{
 
 
 		 		 	public function creer_serie($name){
-		 		 		$this->base = mysql_connect($this->hostname_base, $this->username_base,
-		 		 			$this->password_base) or trigger_error(mysql_error(),E_USER_ERROR);
-		 		 		mysql_select_db($this->database_base, $this->base);
 		 		 		if(!$this->verif_existe_serie($name)){
 		 		 			$tab=$this->info_serie($name);
 		 		 		/* echo"<pre>";
@@ -366,4 +380,7 @@ class serie{
 
 	}
 
+
+$test=new serie();
+var_dump($test->info_serie("alias"));
 	?>
