@@ -212,7 +212,7 @@ echo "<table>";
 			foreach($tabs['tab'] as $value){
 				echo '<tr><td id="spacer2" colspan="3"></td></tr>';
 			
-			echo '<tr id="tr0'.$i.'"><td style="width:200px;" onclick="lancer_film(\''.$dossier.$value.'\')">'.$value.'<br></td>
+			echo '<tr id="tr0'.$i.'"><td style="width:200px;" onclick="lancer_video(\''.$dossier.$value.'\')">'.$value.'<br></td>
 			<td rowspan="2" id="image_'.$i.'" style="width:200px;"></td><td rowspan="2" id="texte_'.$i.'" style="width:500px;"></td>
 			<td><input type="text" id="input'.$i.'" value="'.$f->preparer_lien_allocine($value).'" size="30" onchange="chercher(\''.$i.'\');">
 			<input type="hidden" id="valeur_init'.$i.'" value="'.$f->preparer_lien_allocine($value).'" ><br/>

@@ -1,10 +1,11 @@
 <?php
-if(empty($_GET['id_film'])){exit;}
+$id=(isset($_GET['id']))?$_GET['id']:$id;
+if(empty($id)){exit;}
 require_once('classes/factory.class.php');
 $f=factory::load("film");
 $a=factory::load("acteurs");
 $g=factory::load("genre");
-$infos_film=$f->list_film(array('id_film'=>$_GET['id_film']),1);
+$infos_film=$f->list_film(array('id_film'=>$id),1);
 ?>
 
 <h1><?php echo utf8_encode($infos_film['titre']); ?> <?php if($infos_film['titre']!=$infos_film['titre_original']){echo "(".$infos_film['titre_original'].")";}?> </h1>
@@ -73,7 +74,7 @@ else{
 					foreach($liens as $lien){?>  
 
 
-					<a href="#" title="<?php echo $lien['lien']; ?>" onclick="lancer_film('<?php echo $lien['lien']; ?>')"><?php echo $lien['nom'];?></a> 
+					<a href="#" title="<?php echo $lien['lien']; ?>" onclick="lancer_video('<?php echo $lien['lien']; ?>')"><?php echo $lien['nom'];?></a> 
 					&nbsp;&nbsp;<a href="#" onclick="afficher('<?php echo $lien['lien']; ?>')">Afficher </a> 
 					&nbsp;&nbsp;<a href="#" onclick="supprimer_lien('<?php echo $lien['lien']; ?>')">Supprimer </a> 
 					&nbsp;&nbsp;<select STYLE="width:100px" name="select_qualite_<?php echo $infos_film['id_film']; ?>" id="select_qualite_<?php echo $infos_film['id_film']; ?>" size="1" onchange="voter_qualite('<?php echo $lien['id_liens'];?>',this);">

@@ -74,7 +74,7 @@ class fichier{
 	 * @param  string $lien lien vers le fichier
 	 * @return vide
 	 */
-	public static function lancer_film($lien){
+	public static function lancer_video($lien){
 		$param=array($lien);
 		self::executer("vlc",$param);
 	}

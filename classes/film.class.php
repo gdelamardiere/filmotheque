@@ -151,7 +151,7 @@ class film{
 				if(!$this->verif_existe_film($id_film)){
 					$synopsis=(isset($infos["synopsisShort"]))?$infos["synopsisShort"]:"";
 				}
-				else{$synopsis='<p onclick="lancer_film(\''.$this->lien->lien_film_unique($id_film).'\')">ce film existe deja</p>';}
+				else{$synopsis='<p onclick="lancer_video(\''.$this->lien->lien_film_unique($id_film).'\')">ce film existe deja</p>';}
 				$tab=array($id_film,$synopsis,$poster);		 		 	
 			}
 			else{$tab=array("","film introuvable","");}
@@ -166,7 +166,7 @@ class film{
 				$poster=$array["posterURL"];					
 				if($echo){			
 					if($this->verif_existe_film($id_film)){
-						echo '<tr><td><img  onclick="lancer_film(\''.$this->lien->lien_film_unique($id_film).'\')" alt="poster" src="'.$poster.'" width="50px" /><br>'.$titre.' ('.$annee.')<br>'.$id_film;
+						echo '<tr><td><img  onclick="lancer_video(\''.$this->lien->lien_film_unique($id_film).'\')" alt="poster" src="'.$poster.'" width="50px" /><br>'.$titre.' ('.$annee.')<br>'.$id_film;
 						echo '<br>ce film existe deja';
 					}
 					else{

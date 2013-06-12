@@ -4,6 +4,8 @@ $f=factory::load("film");
 $g=factory::load("genre");
 $liste_films=$f->list_film($_GET);
 $liste_genres=$g->list_genre_film();
+$type="film";
+$id=$liste_films[0]['id_film'];
 ?>
 
 
@@ -22,59 +24,14 @@ $liste_genres=$g->list_genre_film();
   <?php  for($i=0;$i<count($liste_films);$i++){echo "x[".$liste_films[$i]['id_film']."] = '".$liste_films[$i]['fanart']."';\n";} ?>
   </SCRIPT>
   <script type="text/javascript" src="js/common.js"></script>
-
+<script type="text/javascript" src="js/film.js"></script>
 
 
 </head>
 
-<body id="body" onload="chargement();" >
-  <div id="container" style="float:right;">
-    <div id="top">
-      <!-- login -->
-      <ul class="login">
-       <li class="left">&nbsp;</li>		        
-       <li><a id="toggleLogin" href="#" onclick="ouvrir();">Menu</a></li>
-     </ul> <!-- / login -->
-   </div> <!-- / top -->
- </div><!-- / container -->
- <div id="login" >
-  <div class="entete">
-   <div id="sous_entete" style="height: 160px;"></div>
-   <div class="loginClose"><a href="#" id="closeLogin" onclick="fermer();">Close Panel</a></div>			
-   <table style="width:100%" >
-    <tr>
-      <td><input type="button" value="Importer un répertoire:" onclick="rep_film();">
-      <input type="texte" value="" id="rep">
-    </td>
-   <td><h1>Menu Principal</h1></td>
-   <td><input type="button" value="Rechercher un acteur:" onclick="acteur_film();"><input type="texte" value="" id="acteur"></td>
-   <td><input type="button" value="Rechercher un film:" onclick="film();"><input type="texte" value="" id="film"></td>
- </tr>
- <tr name="entete" id="entete">
-  <td colspan="2">
-  <input type="button" value="Fanart(www.themoviedb.org):" onclick="maj_fanart()"/> <input type="text" name="new_fanart" id="new_fanart"/>
-</td>
-<td style="font-size:16px;text-align:center;"><h3><a href="http://localhost/filmotheque/index.php"><input type="button" value="Film"></a> <a href="http://localhost/filmotheque/serie.php"><input type="button" value="Série"></a>
-  <br><a href="http://localhost/filmotheque/film_affichage_liste.php"><input type="button" value="Affichage liste"></a></h3></td>
-  <td >
-   <input type="button" value="id_allocine:" onclick="modifier_film_id()"/> <input type="text" name="new_id_allocine" id="new_id_allocine"/>
-   <input type="hidden" name="id_film" id="id_film" value="<?php echo $value['id_film']; ?>"/>
- </td>
- <td >
-  <a href="modifier_fiche_film.php?id=<?php echo $value['id_film']; ?>">Modifier manuellement</a></td>
-</tr>
-</table>
-
-
-
-
-</div>
-
-
-</div>
-
-
-
+<body id="body" onload="chargement();" >   
+ <?php require_once("tpl_entete.php");?>
+    
 
 <div id="conteneur" >
 
@@ -85,12 +42,8 @@ $liste_genres=$g->list_genre_film();
       <tr>
         <td style="width:85%">
           <div id="content_left"/>
-          <?php 
-          $_GET['id_film']=$liste_films[0]['id_film'];
-          require_once("tpl_film.php");
-          ?>
-
-        </div>
+             <?php require_once("tpl_film.php");?>
+          </div>
 
       </td><td style="vertical-align:bottom;">
       <select name="select_genre" id="select_genre" size="1" onchange="change_genre(this);">

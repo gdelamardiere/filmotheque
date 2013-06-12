@@ -24,26 +24,102 @@ private $pdo;
 	}
 
 
+	public function list_serie($aParams,$limit=false){
+		$select="SELECT distinct s.* ";
+		$from=" FROM serie s ";
+		$sCondition="";
+		$aCondition=array();
+		if(!empty($aParams)){
+			foreach($aParams as $key=>$value){
+				switch ($key) {
+					case 'id_serie':
+						$sCondition.=($sCondition=="")?"WHERE ":"AND ";
+						$sCondition.="s.id_serie=:id_serie";
+						$aCondition["id_serie"]=$value;
+						break;
+					case 'titre':
+						$sCondition.=($sCondition=="")?"WHERE ":"AND ";
+						$sCondition.=" s.titre LIKE :titre1 or s.titre LIKE :titre2 or s.titre_original LIKE :titre1 or s.titre_original LIKE :titre2";
+						$aCondition["titre1"]="%".$value."%";
+						$aCondition["titre2"]="%".utf8_decode($value)."%";
+						break;
+					case 'acteur':
+						$from.=",acteur_serie as, acteur a ";
+						$sCondition.=($sCondition=="")?"WHERE ":"AND ";
+						$sCondition.="a.id_acteur=as.id_acteur AND as.id_serie=s.id_serie AND a.nom LIKE :acteur";
+						$aCondition["acteur"]="%".$value."%";
+						break;
+					
+					default:
+						break;
+				}
+			}
+		}
+		$stmt= $this->pdo->prepare($select.$from.$sCondition." order by s.titre");
+		$stmt->execute($aCondition);
+		$result=$stmt->fetchAll(PDO::FETCH_ASSOC);
+		if($limit!==false){
+			$result=$result[0];
+		}
+		return $result;
+	}
+
+
+	public function liste_episodes_serie($id_serie){
+		$tab_episode=array();
+		$select="SELECT e.id,e.num_episode,e.titre,e.synopsis,e.id_saison,l.lien,l.nom,l.qualite 
+				FROM   episode as e LEFT OUTER JOIN liens as l on e.id=l.id_episode 
+				WHERE  id_serie=:id_serie";
+		$stmt= $this->pdo->prepare($select);
+		$stmt->execute(array('id_serie'=>$id_serie));
+		while($val = $stmt->fetch(PDO::FETCH_ASSOC)){
+			if(!isset($tab_episode[$val['id_saison']][$val['num_episode']])){
+				$tab_episode[$val['id_saison']][$val['num_episode']]['id_episode']=$val['id'];
+				$tab_episode[$val['id_saison']][$val['num_episode']]['titre']=$val['titre'];
+				$tab_episode[$val['id_saison']][$val['num_episode']]['synopsis']=$val['synopsis'];
+				$tab_episode[$val['id_saison']][$val['num_episode']]['lien']=array();
+			}
+			if($val['lien']!= null){
+				$tab_episode[$val['id_saison']][$val['num_episode']]['lien'][]=array("lien"=>$val['lien'],
+																				 "nom"=>$val['nom'],
+																				 "qualite"=>$val['qualite']);
+			}
+		}
+		return $tab_episode;
+	}
+
+	public function last_lien($id_serie){
+		$select="SELECT l.lien,e.num_episode,e.id_saison 
+				FROM episode e,liens l 
+				WHERE id_serie=:id_serie 
+				AND l.id_episode=e.id 
+				order by e.id_saison desc,e.num_episode desc limit 1 ";
+		$stmt= $this->pdo->prepare($select);
+		$stmt->execute(array('id_serie'=>$id_serie));
+		$result=$stmt->fetchAll(PDO::FETCH_ASSOC);
+		return $result[0];
+	}
+
 		 /**
 		* ajoute dans la base sql les données d'une nouvelle série
 		*retourne l'id de la nouvelle série
 		 */
-		private function insert_serie($id_allocine,$titre_original,$titre,$nb_saison,$nb_episodes,$synopsis,$duree_episode,$poster){
+		private function insert_serie($id_serie,$titre_original,$titre,$nb_saison,$nb_episodes,$synopsis,$duree_episode,$poster){
 			$query = "INSERT INTO serie
-			(id_allocine,titre_original,titre,nombre_saisons,nombre_episodes,synopsis,duree_episode,poster)
-			VALUES('".$id_allocine."','".$titre_original."','".$titre."','".$nb_saison."','".$nb_episodes."','".$synopsis."','".$duree_episode."','".$poster."')";
+			(id_serie,titre_original,titre,nombre_saisons,nombre_episodes,synopsis,duree_episode,poster)
+			VALUES('".$id_serie."','".$titre_original."','".$titre."','".$nb_saison."','".$nb_episodes."','".$synopsis."','".$duree_episode."','".$poster."')";
 			$Record = mysql_query($query, $this->base);
-			return mysql_insert_id();		 		 
+			return $id_serie;		 		 
 		}
 
 
 		private function info_serie($str){
 			$info=$this->allo->search( $str, 1, 10, false, array("tvseries") );
 			$infos=$info->getArray();
-			$id_allocine="";
+			$id_serie="";
 			if(isset($infos["tvseries"][0]['code'])){
-				$id_allocine=$infos["tvseries"][0]['code'];
-				$infos=$this->allo->tvserie($id_allocine);
+				$id_serie=$infos["tvseries"][0]['code'];
+				$infos=$this->allo->tvserie($id_serie);
 				$infos=$infos->getArray();
 			}
 			$titre_original="";
@@ -67,7 +143,7 @@ private $pdo;
 
 			$poster="";
 			if(isset($infos['poster'][0])){$poster=htmlspecialchars($infos['poster'][0],ENT_QUOTES);}
-			return array("info" => $infos,"id_allocine" => $id_allocine, "titre_original" =>
+			return array("info" => $infos,"id_serie" => $id_serie, "titre_original" =>
 				$titre_original , "titre" => $titre, "nb_saison" => $nb_saison ,
 				"nb_episodes" => $nb_episodes , "synopsis" => $synopsis ,
 				"duree_episode" => $duree_episode , "poster" => $poster);
@@ -208,10 +284,10 @@ private $pdo;
 		 		 		 var_dump($tab);
 		 		 		 echo"</pre>";die();*/
 		 		 		 if ($tab['nb_saison']==0){$tab['nb_saison']=1;}
-		 		 		 $id=$this->insert_serie($tab['id_allocine'],$tab['titre_original'],$tab['titre'],$tab['nb_saison'],$tab['nb_episodes'],$tab['synopsis'],$tab['duree_episode'],$tab['poster']);
+		 		 		 $id=$this->insert_serie($tab['id_serie'],$tab['titre_original'],$tab['titre'],$tab['nb_saison'],$tab['nb_episodes'],$tab['synopsis'],$tab['duree_episode'],$tab['poster']);
 		 		 		 $this->ajout_acteur_serie($id,$tab['info']);						 
-		 		 		// $this->ajout_all_episode($tab['id_allocine'],$id,$tab['nb_saison']);
-		 		 		 $this->maj_serie($tab['id_allocine']);
+		 		 		// $this->ajout_all_episode($tab['id_serie'],$id,$tab['nb_saison']);
+		 		 		 $this->maj_serie($tab['id_serie']);
 		 		 		 $this->fanart_serie($id);
 		 		 		}
 		 		 	}
@@ -246,30 +322,30 @@ private $pdo;
 
 
 
-		 		 	public function maj_serie($id_allocine){
+		 		 	public function maj_serie($id_serie){
 		 		 		$this->base = mysql_connect($this->hostname_base, $this->username_base,$this->password_base) or trigger_error(mysql_error(),E_USER_ERROR);
 		 		 		mysql_select_db($this->database_base, $this->base);			
 
 		 		 		$allo= new AlloHelper;			
-		 		 		$infos=$allo->tvserie($id_allocine,"large")->getArray();			
+		 		 		$infos=$allo->tvserie($id_serie,"large")->getArray();			
 		 		 		$nombre_saisons=$infos["seasonCount"];
 		 		 		$nombre_episodes=$infos["episodeCount"];		
 
-		 		 		$query_Recordset1 = "update serie set nombre_saisons='".$nombre_saisons."',nombre_episodes='".$nombre_episodes."'  where id_allocine=".$id_allocine."  ";
+		 		 		$query_Recordset1 = "update serie set nombre_saisons='".$nombre_saisons."',nombre_episodes='".$nombre_episodes."'  where id_serie=".$id_serie."  ";
 		 		 		$Recordset1 = mysql_query($query_Recordset1, $this->base) ;
 
 		 		 		foreach($infos["season"] as $saison){
-		 		 			$this->maj_saison($id_allocine,$saison['code']);
+		 		 			$this->maj_saison($id_serie,$saison['code']);
 		 		 		}			
 		 		 	}
 
 		 		 	public function maj_all_serie(){
 		 		 		$this->base = mysql_connect($this->hostname_base, $this->username_base,$this->password_base) or trigger_error(mysql_error(),E_USER_ERROR);
 		 		 		mysql_select_db($this->database_base, $this->base);			
-		 		 		$query = "SELECT distinct(id_allocine) FROM serie ";
+		 		 		$query = "SELECT distinct(id_serie) FROM serie ";
 		 		 		$Recordset = mysql_query($query, $this->base) ;
 		 		 		while($row = mysql_fetch_assoc($Recordset)){
-		 		 			$this->maj_serie($row['id_allocine']);
+		 		 			$this->maj_serie($row['id_serie']);
 		 		 		}			
 		 		 	}
 
@@ -314,7 +390,7 @@ private $pdo;
 		
 		private function id_episode($id_serie_allocine,$num_saison,$num_episode){
 			mysql_select_db($this->database_base, $this->base);
-			$query_Recordset1 = "SELECT e.id FROM episode as e, serie as s where e.id_serie=s.id AND s.id_allocine=".$id_serie_allocine." AND e.id_saison=".$num_saison." AND e.num_episode=".$num_episode." ";
+			$query_Recordset1 = "SELECT e.id FROM episode as e, serie as s where e.id_serie=s.id AND s.id_serie=".$id_serie_allocine." AND e.id_saison=".$num_saison." AND e.num_episode=".$num_episode." ";
 			$Recordset1 = mysql_query($query_Recordset1, $this->base) ;
 			$row_Recordset1 = mysql_fetch_assoc($Recordset1);
 			if(isset($row_Recordset1['id']) && $row_Recordset1['id']!=null){
@@ -326,7 +402,7 @@ private $pdo;
 		
 		private function id_serie($id_serie_allocine){
 			mysql_select_db($this->database_base, $this->base);
-			$query_Recordset1 = "SELECT id FROM serie where id_allocine=".$id_serie_allocine."  ";
+			$query_Recordset1 = "SELECT id FROM serie where id_serie=".$id_serie_allocine."  ";
 			$Recordset1 = mysql_query($query_Recordset1, $this->base) ;
 			$row_Recordset1 = mysql_fetch_assoc($Recordset1);
 			if(isset($row_Recordset1['id']) && $row_Recordset1['id']!=null){
@@ -381,6 +457,6 @@ private $pdo;
 	}
 
 
-$test=new serie();
-var_dump($test->info_serie("alias"));
+/*$test=new serie();
+var_dump($test->info_serie("alias"));*/
 	?>
